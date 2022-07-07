@@ -10,12 +10,12 @@ pragma solidity ^0.8.4;
 /******************************************************************************/
 
 import "../../libraries/LibDiamond.sol";
+import "../../libraries/LibProtocolMetaData.sol";
 import "../../libraries/LibHeadquarter.sol";
-import "../../libraries/LibProtocolMeta.sol";
 
-contract HeadquarterOwnerFacet {
+contract HeadquarterManageFacet {
     modifier onlyOwner() {
-        require(LibProtocolMeta.msgSender() == LibDiamond.contractOwner());
+        require(LibProtocolMetaData._msgSender() == LibDiamond.contractOwner(), "FOREST: Caller is not the owner");
         _;
     }
 
@@ -33,24 +33,23 @@ contract HeadquarterOwnerFacet {
         HQds.headquartersMetadata.forestPrice = _forestPrice;
     }
 
-    function setHeadquartersMaxBalance(uint8 _newMaxBalance) external onlyOwner {
+    function setHeadquartersMaxBalance(uint8 _maxBalance) external onlyOwner {
         LibHeadquarter.DiamondStorage storage HQds = LibHeadquarter.diamondStorage();
-        HQds.headquartersMetadata.maxBalance = _newMaxBalance;
+        HQds.headquartersMetadata.maxBalance = _maxBalance;
     }
 
-    function setHeadquartersMaxLevel(uint8 _newMaxLevel) external onlyOwner {
+    function setHeadquartersMaxLevel(uint8 _maxLevel) external onlyOwner {
         LibHeadquarter.DiamondStorage storage HQds = LibHeadquarter.diamondStorage();
-        HQds.headquartersMetadata.maxLevel = _newMaxLevel;
+        HQds.headquartersMetadata.maxLevel = _maxLevel;        
     }
 
-    function setHeadquartersMaxYieldTreesPerLevel(uint8 _newMaxYieldTreesPerLevel) external onlyOwner {
+    function setHeadquartersMaxYieldTreesPerLevel(uint8 _maxYieldTreesPerLevel) external onlyOwner {
         LibHeadquarter.DiamondStorage storage HQds = LibHeadquarter.diamondStorage();
-        HQds.headquartersMetadata.maxYieldTreesPerLevel = _newMaxYieldTreesPerLevel;
+        HQds.headquartersMetadata.maxYieldTreesPerLevel = _maxYieldTreesPerLevel;        
     }
 
-    function setHeadquartersForestPrice(uint256 _newForestPrice) external onlyOwner {
+    function setHeadquartersForestPrice(uint8 _forestPrice) external onlyOwner {
         LibHeadquarter.DiamondStorage storage HQds = LibHeadquarter.diamondStorage();
-        HQds.headquartersMetadata.forestPrice = _newForestPrice;
+        HQds.headquartersMetadata.forestPrice = _forestPrice;        
     }
-
 }

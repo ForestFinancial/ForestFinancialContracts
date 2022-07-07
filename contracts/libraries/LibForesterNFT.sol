@@ -10,7 +10,7 @@ pragma solidity ^0.8.4;
 /******************************************************************************/
 
 import "../interfaces/IERC721.sol";
-import "../libraries/LibProtocolMeta.sol";
+import "../libraries/LibProtocolMetaData.sol";
 import "../libraries/LibYieldTree.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -30,7 +30,7 @@ library LibForesterNFT {
     }
 
     function _mintForesterNFT(uint256 _yieldtreeId) internal returns(uint256) {
-        LibProtocolMeta.DiamondStorage storage PMds = LibProtocolMeta.diamondStorage();
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
         LibForesterNFT.DiamondStorage storage FNFTds = LibForesterNFT.diamondStorage();
 

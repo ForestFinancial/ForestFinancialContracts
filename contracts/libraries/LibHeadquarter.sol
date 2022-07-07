@@ -10,7 +10,7 @@ pragma solidity ^0.8.4;
 /******************************************************************************/
 
 import "../libraries/LibYieldTree.sol";
-import "../libraries/LibProtocolMeta.sol";
+import "../libraries/LibProtocolMetaData.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 library LibHeadquarter {
@@ -28,7 +28,7 @@ library LibHeadquarter {
         uint8 maxBalance;
         uint8 maxLevel;
         uint8 maxYieldTreesPerLevel;
-        uint256 forestPrice; // Price = baseTokenPrice * current max YieldTree capacity (balance * maxYieldTreesPerLevel)
+        uint256 forestPrice; // Price = forestPrice * current max YieldTree capacity (balance * maxYieldTreesPerLevel)
     }
 
     struct DiamondStorage {
@@ -38,11 +38,8 @@ library LibHeadquarter {
         Counters.Counter headquarterCounterId; // Responsible for giving headquarters a special id
     }
 
-    /******************************************************************************\
-    * @dev Reason for having the mint function inside this library is to make this function easily callable by each facet
-    /******************************************************************************/
     function _mintHeadquarter(address _for, string memory _continent) internal returns (uint256) {
-        LibProtocolMeta.DiamondStorage storage PMds = LibProtocolMeta.diamondStorage();
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         LibHeadquarter.DiamondStorage storage HQds = LibHeadquarter.diamondStorage();
 
         HQds.headquarterCounterId.increment();
@@ -68,24 +65,17 @@ library LibHeadquarter {
         headquarter.level += 1;
     }
 
-    /******************************************************************************\
-    * @dev Returns the current max amount of YieldTrees a address can have
-    /******************************************************************************/
     function _getMaxYieldTreeCapacityOf(address _of) internal view returns(uint256) {
-        LibHeadquarter.DiamondStorage storage ds = LibHeadquarter.diamondStorage();
-        uint256[] memory ownedHeadquarters = ds.headquartersOf[_of];
+        LibHeadquarter.DiamondStorage storage HQds = LibHeadquarter.diamondStorage();
+        uint256[] memory ownedHeadquarters = HQds.headquartersOf[_of];
         uint256 totalLevels = 0;
-        for (uint256 i = 0; i < ownedHeadquarters.length; i++) totalLevels += ds.headquarters[ownedHeadquarters[i]].level;
-        return totalLevels * ds.headquartersMetadata.maxYieldTreesPerLevel;
+        for (uint256 i = 0; i < ownedHeadquarters.length; i++) totalLevels += HQds.headquarters[ownedHeadquarters[i]].level;
+        return totalLevels * HQds.headquartersMetadata.maxYieldTreesPerLevel;
     }
 
-    /******************************************************************************\
-    * @dev Returns the price to either buy a new Headquarter or upgrade a existing one
-    /******************************************************************************/
-    function _calculatePrice(address _for) internal view returns (uint256) {
-        LibHeadquarter.DiamondStorage storage ds = LibHeadquarter.diamondStorage();
-        uint256 maxCapacity = LibHeadquarter._getMaxYieldTreeCapacityOf(_for);
-        return ds.headquartersMetadata.forestPrice * maxCapacity;
+    function _getTokenPrice(address _for) internal view returns (uint256) {
+        LibHeadquarter.DiamondStorage storage HQds = LibHeadquarter.diamondStorage();
+        return HQds.headquartersMetadata.forestPrice * _getMaxYieldTreeCapacityOf(_for);
     }
 
     // Returns the struct from a specified position in contract storage

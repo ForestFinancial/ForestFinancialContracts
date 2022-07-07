@@ -10,12 +10,12 @@ pragma solidity ^0.8.4;
 /******************************************************************************/
 
 import "../../libraries/LibDiamond.sol";
-import "../../libraries/LibProtocolMeta.sol";
+import "../../libraries/LibProtocolMetaData.sol";
 import "../../libraries/LibForesterNFT.sol";
 
-contract ForesterNFTOwnerFacet {
+contract ForesterNFTManageFacet {
     modifier onlyOwner() {
-        require(LibProtocolMeta.msgSender() == LibDiamond.contractOwner());
+        require(LibProtocolMetaData._msgSender() == LibDiamond.contractOwner(), "FOREST: Caller is not the owner");
         _;
     }
 
@@ -23,7 +23,7 @@ contract ForesterNFTOwnerFacet {
         uint8 _maxProductivity,
         uint32 _maxLevel,
         uint256 _forestBoostPerLevel,
-        uint8 _baseExperiencePerDay
+        uint8 _baseExperiencePerDay 
     ) external onlyOwner {
         LibForesterNFT.DiamondStorage storage FNFTds = LibForesterNFT.diamondStorage();
 
@@ -33,23 +33,23 @@ contract ForesterNFTOwnerFacet {
         FNFTds.baseExperiencePerDay = _baseExperiencePerDay;
     }
 
-    function setForesterMaxProductivity(uint8 _newMaxProductivity) external onlyOwner {
+    function setForesterNFTMaxProductivity(uint8 _maxProductivity) external onlyOwner {
         LibForesterNFT.DiamondStorage storage FNFTds = LibForesterNFT.diamondStorage();
-        FNFTds.maxProductivity = _newMaxProductivity;
+        FNFTds.maxProductivity = _maxProductivity;
     }
 
-    function setForesterMaxLevel(uint8 _newMaxLevel) external onlyOwner {
+    function setForesterNFTMaxLevel(uint32 _maxLevel) external onlyOwner {
         LibForesterNFT.DiamondStorage storage FNFTds = LibForesterNFT.diamondStorage();
-        FNFTds.maxLevel = _newMaxLevel;
+        FNFTds.maxLevel = _maxLevel;
     }
 
-    function setForesterForestBoostPerLevel(uint8 _newForestBoostPerLevel) external onlyOwner {
+    function setForesterNFTForestBoosPerLevel(uint256 _forestBoostPerLevel) external onlyOwner {
         LibForesterNFT.DiamondStorage storage FNFTds = LibForesterNFT.diamondStorage();
-        FNFTds.forestBoostPerLevel = _newForestBoostPerLevel;
+        FNFTds.forestBoostPerLevel = _forestBoostPerLevel;       
     }
 
-    function setBaseExperiencePerDay(uint8 _newBaseExperiencePerDay) external onlyOwner {
+    function setForesterNFTBaseExperiencePerDay(uint8 _baseExperiencePerDay) external onlyOwner {
         LibForesterNFT.DiamondStorage storage FNFTds = LibForesterNFT.diamondStorage();
-        FNFTds.baseExperiencePerDay = _newBaseExperiencePerDay;
+        FNFTds.baseExperiencePerDay = _baseExperiencePerDay;        
     }
 }

@@ -10,7 +10,7 @@ pragma solidity ^0.8.4;
 /******************************************************************************/
 
 import "../interfaces/IERC721.sol";
-import "../libraries/LibProtocolMeta.sol";
+import "../libraries/LibProtocolMetaData.sol";
 import "../libraries/LibTokenData.sol";
 import "../libraries/LibHeadquarter.sol";
 import "../libraries/LibForesterNFT.sol";
@@ -38,13 +38,15 @@ library LibYieldTree {
 
     struct Metadata {
         uint256 forestPrice; // The full price of a single YieldTree.
-        uint256 forestFeePerMonth; // Monthly fee in forest per month.
-        uint8 maxFeePrepaymentMonths; // Amount of months someone can prepay the yieldtrees their fees
         uint8 percentageInEther; // The percentage of tokenPrice which has to be paid in ether, this amount will be subracted from tokenPrice. If set to 0, no ether has to be paid and YieldTree has to be paid fully in forestToken
+        
         uint256 baseRewards; // Starting daily reward amount
         uint256 decayAfter; // Amount of days after which decay starts
         uint256 decayTo; // Amount to decay to after decayAfterRewardedForest has been reached
         uint256 decayPerDay; // Amount to decay each day until it reaches decayTo
+
+        uint256 forestFeePerMonth; // Monthly fee in forest per month.
+        uint8 maxFeePrepaymentMonths; // Amount of months someone can prepay the yieldtrees their fees
     }
 
     struct PaymentDistribution {
@@ -54,6 +56,8 @@ library LibYieldTree {
         uint8 etherLiquidityPercentage;
         uint8 etherRewardPercentage;
         uint8 etherTreasuryPercentage;
+        uint8 feeTreasuryPercentage;
+        uint8 feeCharityPercentage;
     }
 
     struct RewardSnapshotter {
@@ -85,7 +89,7 @@ library LibYieldTree {
     }
 
     function _mintYieldTree(address _for, uint256 _headquarterId) internal returns (uint256) {
-        LibProtocolMeta.DiamondStorage storage PMds = LibProtocolMeta.diamondStorage();
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
         LibHeadquarter.DiamondStorage storage HQds = LibHeadquarter.diamondStorage();
         LibHeadquarter.Headquarter storage headquarter = HQds.headquarters[_headquarterId];
@@ -119,7 +123,7 @@ library LibYieldTree {
     function _takeRewardsSnapshot(uint256 _yieldtreeId) internal {
         LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
 
-        YTds.rewardSnapshots[_yieldtreeId].snapshottedRewards = _getTotalRewardsOf(_yieldtreeId);
+        YTds.rewardSnapshots[_yieldtreeId].snapshottedRewards = _getRewardsOf(_yieldtreeId);
         YTds.rewardSnapshots[_yieldtreeId].snapshotTime = uint32(block.timestamp);
     }
 
@@ -130,7 +134,7 @@ library LibYieldTree {
         YTds.rewardSnapshots[_yieldtreeId].snapshotTime = uint32(block.timestamp);
     }
 
-    function _getTotalRewardsOf(uint256 _yieldtreeId) internal view returns(uint256) {
+    function _getRewardsOf(uint256 _yieldtreeId) internal view returns(uint256) {
         LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
 
         uint256 lastSnapshotTime = YTds.rewardSnapshots[_yieldtreeId].snapshotTime;

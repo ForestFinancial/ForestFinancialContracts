@@ -12,7 +12,7 @@ pragma solidity ^0.8.4;
 import "../../libraries/LibDiamond.sol";
 import "../../libraries/LibProtocolMetaData.sol";
 
-contract YieldTreeManageFacet {
+contract ProtocolDataManageFacet {
     modifier onlyOwner() {
         require(LibProtocolMetaData._msgSender() == LibDiamond.contractOwner(), "FOREST: Caller is not the owner");
         _;
@@ -24,13 +24,7 @@ contract YieldTreeManageFacet {
         address _rootsTreasury,
         address _charity,
         address _forestToken,
-        address _rootsToken,
-        address _stableToken,
-        address _foresterNFT,
-        address _joeRouter,
-        address _joeFactory,
-        address _joePair,
-        address _priceFeed
+        address _rootsToken
     ) external onlyOwner {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
 
@@ -40,6 +34,19 @@ contract YieldTreeManageFacet {
         PMds.charity = _charity;
         PMds.forestToken = IERC20(_forestToken);
         PMds.rootsToken = IERC20(_rootsToken);
+
+    }
+
+    function initProcotolMetaData2(
+        address _stableToken,
+        address _foresterNFT,
+        address _joeRouter,
+        address _joeFactory,
+        address _joePair,
+        address _priceFeed
+    ) external onlyOwner {
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
+
         PMds.stableToken = IERC20(_stableToken);
         PMds.foresterNFT = IERC721(_foresterNFT);
         PMds.joeRouter = IJoeRouter02(_joeRouter);

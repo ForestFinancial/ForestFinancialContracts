@@ -31,7 +31,7 @@ library LibRoots {
 
         PMds.forestToken.transferFrom(PMds.rewardPool, address(this), _forestAmount);
 
-        uint256 rootsBuyPrice = _getRootsBuyPrice();
+        uint256 rootsBuyPrice = _getRootsBuyPrice(_for);
 
         PMds.forestToken.approve(address(PMds.joeRouter), _forestAmount);
 
@@ -58,7 +58,7 @@ library LibRoots {
     function _giveForestBasedOnRoots(address _for, uint256 _rootsAmount) internal {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
 
-        uint256 rootsSellingValue = (_rootsAmount * _getRootsSellPrice()) / (1 * 10 ** PMds.stableToken.decimals());
+        uint256 rootsSellingValue = (_rootsAmount * _getRootsSellPrice(_for)) / (1 * 10 ** PMds.stableToken.decimals());
         uint256 swapTax = 10 * (10 ** (PMds.stableToken.decimals() - 2)); // 0.10%
         uint256 taxedAmount = (rootsSellingValue * swapTax) / (1 * 10 ** (PMds.stableToken.decimals() + 2));
 
@@ -110,26 +110,54 @@ library LibRoots {
         return PMds.rootsToken.totalSupply();
     }
 
-    function _getRootsBuyPrice() internal view returns (uint256) {
+    function _getRootsBuyPrice(address _for) internal view returns (uint256) {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
 
         uint256 baseBackingPrice = _getBackingPrice();
         uint256 buySellMultiplier = _getBuySellMultiplier(true);
+        uint256 discount = _getDiscount(_for);
 
         uint256 price = (baseBackingPrice * buySellMultiplier) / (1 * 10 ** (PMds.rootsToken.decimals() + 1));
+
+        if (discount > 0) {
+            price -= (discount * price) / (1 * 10 ** (PMds.rootsToken.decimals() + 2));
+        }
         
         return price;
     }
 
-    function _getRootsSellPrice() internal view returns (uint256) {
+    function _getRootsSellPrice(address _for) internal view returns (uint256) {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
 
         uint256 baseBackingPrice = _getBackingPrice();
         uint256 buySellMultiplier = _getBuySellMultiplier(false);
+        uint256 discount = _getDiscount(_for);
 
         uint256 price = (baseBackingPrice * buySellMultiplier) / (1 * 10 ** (PMds.rootsToken.decimals() + 1));
+
+        if (discount > 0) {
+            price += (discount * price) / (1 * 10 ** (PMds.rootsToken.decimals() + 2));
+        }
         
         return price;
+    }
+
+    function _getDiscount(address _for) internal view returns (uint256) {
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
+        LibRoots.DiamondStorage storage RTds = LibRoots.diamondStorage();
+        LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
+
+        uint256 discount;
+
+        if (YTds.yieldtreesOf[_for].length > 0) discount += 5 * (10 ** PMds.rootsToken.decimals());
+
+        discount += (25 * (10 ** (PMds.rootsToken.decimals() - 2))) * PMds.seedNFT.balanceOf(_for);
+        discount += (5 * (10 ** (PMds.rootsToken.decimals() - 1))) * PMds.saplingNFT.balanceOf(_for);
+        discount += (1 * (10 ** PMds.rootsToken.decimals())) * PMds.treeNFT.balanceOf(_for);
+
+        if (discount > RTds.maxDiscount) discount = RTds.maxDiscount;
+
+        return discount;
     }
 
     function _getBuySellMultiplier(bool _isBuying) internal view returns (uint256) {

@@ -19,6 +19,8 @@ interface PresaleContract {
 }
 
 contract PresaleFacet is ReentrancyGuard {
+    event PresaleClaimed(address indexed _for);
+
     modifier notBlacklisted() {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
 
@@ -83,6 +85,8 @@ contract PresaleFacet is ReentrancyGuard {
         }
 
         redeemers[LibProtocolMetaData._msgSender()] = true;
+
+        emit PresaleClaimed(LibProtocolMetaData._msgSender());
     }
 
     /******************************************************************************\

@@ -23,10 +23,13 @@ contract RootsManageFacet {
         uint256 _growthFactorCap,
         uint256 _maxDiscount
     ) external onlyOwner {
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         LibRoots.DiamondStorage storage RTds = LibRoots.diamondStorage();
 
         RTds.growthFactorCap = _growthFactorCap;
         RTds.maxDiscount = _maxDiscount;
+
+        if (RTds.maxDiscount > 10 * (1 * 10 ** PMds.rootsToken.decimals())) RTds.maxDiscount = 10 * (1 * 10 ** PMds.rootsToken.decimals());
     }
 
     function setRootsGrowthFactorCap(uint256 _growthFactorCap) external onlyOwner {
@@ -35,7 +38,11 @@ contract RootsManageFacet {
     }
 
     function setRootsMaxDiscount(uint256 _maxDiscount) external onlyOwner {
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         LibRoots.DiamondStorage storage RTds = LibRoots.diamondStorage();
-        RTds.maxDiscount = _maxDiscount;        
+
+        RTds.maxDiscount = _maxDiscount;
+
+        if (RTds.maxDiscount > 10 * (1 * 10 ** PMds.rootsToken.decimals())) RTds.maxDiscount = 10 * (1 * 10 ** PMds.rootsToken.decimals());
     }
 }

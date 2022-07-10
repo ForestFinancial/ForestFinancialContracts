@@ -29,6 +29,7 @@ contract YieldTreeManageFacet {
         uint256 _forestFeePerMonth,
         uint8 _maxFeePrepaymentMonths
     ) external onlyOwner {
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
 
         YTds.yieldtreesMetadata.forestPrice = _forestPrice;
@@ -39,6 +40,8 @@ contract YieldTreeManageFacet {
         YTds.yieldtreesMetadata.decayPerDay = _decayPerDay;
         YTds.yieldtreesMetadata.forestFeePerMonth = _forestFeePerMonth;
         YTds.yieldtreesMetadata.maxFeePrepaymentMonths = _maxFeePrepaymentMonths;
+
+        if (YTds.yieldtreesMetadata.forestFeePerMonth > 1 * (1 * 10 * PMds.forestToken.decimals())) YTds.yieldtreesMetadata.forestFeePerMonth = 1 * (1 * 10 * PMds.forestToken.decimals());
     }
 
     function setYieldTreesForestPrice(uint256 _forestPrice) external onlyOwner {
@@ -72,8 +75,10 @@ contract YieldTreeManageFacet {
     }
 
     function setYieldTreesForestFeePerMonth(uint256 _forestFeePerMonth) external onlyOwner {
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
         YTds.yieldtreesMetadata.forestFeePerMonth = _forestFeePerMonth;
+        if (YTds.yieldtreesMetadata.forestFeePerMonth > 1 * (1 * 10 * PMds.forestToken.decimals())) YTds.yieldtreesMetadata.forestFeePerMonth = 1 * (1 * 10 * PMds.forestToken.decimals());
     }
 
     function setYieldTreesForestFeePerMonth(uint8 _maxFeePrepaymentMonths) external onlyOwner {
@@ -86,7 +91,7 @@ contract YieldTreeManageFacet {
         uint8 _forestRewardPoolPercentage,
         uint8 _forestTreasuryPercentage,
         uint8 _etherLiquidityPercentage,
-        uint8 _etherRewardPercentage,
+        uint8 _etherRewardPoolPercentage,
         uint8 _etherTreasuryPercentage,
         uint8 _feeTreasuryPercentage,
         uint8 _feeCharityPercentage
@@ -97,7 +102,7 @@ contract YieldTreeManageFacet {
         YTds.paymentDistributionData.forestRewardPoolPercentage = _forestRewardPoolPercentage;
         YTds.paymentDistributionData.forestTreasuryPercentage = _forestTreasuryPercentage;
         YTds.paymentDistributionData.etherLiquidityPercentage = _etherLiquidityPercentage;
-        YTds.paymentDistributionData.etherRewardPercentage = _etherRewardPercentage;
+        YTds.paymentDistributionData.etherRewardPoolPercentage = _etherRewardPoolPercentage;
         YTds.paymentDistributionData.etherTreasuryPercentage = _etherTreasuryPercentage;
         YTds.paymentDistributionData.feeTreasuryPercentage = _feeTreasuryPercentage;
         YTds.paymentDistributionData.feeCharityPercentage = _feeCharityPercentage;
@@ -123,9 +128,9 @@ contract YieldTreeManageFacet {
         YTds.paymentDistributionData.etherLiquidityPercentage = _etherLiquidityPercentage;
     }
 
-    function setYieldTreesEtherRewardPercentage(uint8 _etherRewardPercentage) external onlyOwner {
+    function setYieldTreesEtherRewardPoolPercentage(uint8 _etherRewardPoolPercentage) external onlyOwner {
         LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
-        YTds.paymentDistributionData.etherRewardPercentage = _etherRewardPercentage;
+        YTds.paymentDistributionData.etherRewardPoolPercentage = _etherRewardPoolPercentage;
     }
 
     function setYieldTreesEtherTreasuryPercentage(uint8 _etherTreasuryPercentage) external onlyOwner {

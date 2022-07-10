@@ -9,16 +9,16 @@ pragma solidity ^0.8.4;
 *
 /******************************************************************************/
 
-import "../../interfaces/IERC721.sol";
 import "../../libraries/LibProtocolMetaData.sol";
 import "../../libraries/LibYieldTree.sol";
 import "../../libraries/LibHeadquarter.sol";
 import "../../libraries/LibTokenData.sol";
 import "../../libraries/LibLiquidityManager.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract YieldTreeMainFacet is ReentrancyGuard {
+    event YieldTreeMinted(address indexed _for, uint256 indexed _newYieldTreeId);
+
     modifier notBlacklisted() {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         require(PMds.blacklisted[LibProtocolMetaData._msgSender()] != true, "FOREST: Address is blacklisted");
@@ -52,23 +52,13 @@ contract YieldTreeMainFacet is ReentrancyGuard {
         LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
         LibYieldTree.PaymentDistribution memory paymentDistribution = YTds.paymentDistributionData;
 
-        uint256 forestAmount = _forestAmount;
-        uint256 etherAmount = _etherAmount;
+        uint256 forestToLiquidity = (_forestAmount * (paymentDistribution.forestLiquidityPercentage * (1 * 10 ** PMds.forestToken.decimals()))) / (1 * 10 ** PMds.forestToken.decimals() + 2);
+        uint256 forestToRewardPool = (_forestAmount * (paymentDistribution.forestRewardPoolPercentage * (1 * 10 ** PMds.forestToken.decimals()))) / (1 * 10 ** PMds.forestToken.decimals() + 2);
+        uint256 forestToTreasury = (_forestAmount * (paymentDistribution.forestTreasuryPercentage * (1 * 10 ** PMds.forestToken.decimals()))) / (1 * 10 ** PMds.forestToken.decimals() + 2);
 
-        uint256 forestToLiquidity = (forestAmount / 100) * paymentDistribution.forestLiquidityPercentage;
-        uint256 forestToRewardPool = (forestAmount / 100) * paymentDistribution.forestRewardPoolPercentage;
-        uint256 forestToTreasury = (forestAmount / 100) * paymentDistribution.forestTreasuryPercentage;
-
-        uint256 etherToLiquidity;
-        uint256 etherToRewardPool;
-        uint256 etherToTreasury;
-
-        // First check if there was ether involved in the payment, as etherpercentage may be set on 0;
-        if (etherAmount > 100) {
-            etherToLiquidity = (etherAmount / 100) * paymentDistribution.etherLiquidityPercentage;
-            etherToRewardPool = (etherAmount / 100) * paymentDistribution.etherRewardPercentage;
-            etherToTreasury = (etherAmount / 100) * paymentDistribution.etherTreasuryPercentage;
-        }
+        uint256 etherToLiquidity = (_etherAmount * (paymentDistribution.etherLiquidityPercentage * (1 * 10 ** PMds.forestToken.decimals()))) / (1 * 10 ** PMds.forestToken.decimals() + 2);
+        uint256 etherToRewardPool = (_etherAmount * (paymentDistribution.etherRewardPoolPercentage * (1 * 10 ** PMds.forestToken.decimals()))) / (1 * 10 ** PMds.forestToken.decimals() + 2);
+        uint256 etherToTreasury = (_etherAmount * (paymentDistribution.etherTreasuryPercentage * (1 * 10 ** PMds.forestToken.decimals()))) / (1 * 10 ** PMds.forestToken.decimals() + 2);
 
         PMds.forestToken.transfer(PMds.treasury, forestToTreasury);
         PMds.forestToken.transfer(PMds.rewardPool, forestToRewardPool);
@@ -76,7 +66,19 @@ contract YieldTreeMainFacet is ReentrancyGuard {
         if (etherToLiquidity != 0) payable(PMds.treasury).transfer(etherToTreasury);
         if (etherToRewardPool != 0) payable(PMds.rewardPool).transfer(etherToRewardPool);
 
-        LibLiquidityManager._addLiquidity(etherToLiquidity, forestToLiquidity);
+        if (etherToLiquidity != 0 && forestToLiquidity != 0) {
+            LibLiquidityManager._addLiquidity(etherToLiquidity, forestToLiquidity);
+        } else {
+            uint256[] memory toEtherSwap = PMds.joeRouter.swapExactTokensForTokens(
+                forestToLiquidity / 2,
+                0,
+                LibTokenData._getForestToWAVAXPath(),
+                address(this),
+                block.timestamp
+            );
+
+            LibLiquidityManager._addLiquidity(toEtherSwap[1], forestToLiquidity / 2);
+        }
     }
 
     /******************************************************************************\
@@ -107,55 +109,8 @@ contract YieldTreeMainFacet is ReentrancyGuard {
         );
 
         distributeYieldTreePayment(forestTokenPrice, msg.value);
-        return LibYieldTree._mintYieldTree(LibProtocolMetaData._msgSender(),  _headquarterId);
-    }
-
-    /******************************************************************************\
-    * @dev Returns the total amount of YieldTrees in existence
-    /******************************************************************************/
-    function getTotalYieldTrees() public view returns (uint256) {
-        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
-        return PMds.totalYieldTrees;
-    }
-
-    /******************************************************************************\
-    * @dev Returns Forest Token price to buy a YieldTree
-    /******************************************************************************/
-    function getYieldTreeForestPrice() public view returns (uint256) {
-        return LibYieldTree._getTokenPrice();
-    }
-
-    /******************************************************************************\
-    * @dev Returns ether price to buy a YieldTree
-    /******************************************************************************/
-    function getYieldTreeEtherPrice() public view returns (uint256) {
-        return LibYieldTree._getEtherPrice();
-    }
-
-    /******************************************************************************\
-    * @dev Returns YieldTree balance of specific address
-    /******************************************************************************/
-    function getYieldTreeBalance(address _of) public view returns(uint256) {
-        LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
-        uint256[] memory yieldtrees = YTds.yieldtreesOf[_of];
-        return yieldtrees.length;
-    }
-
-    /******************************************************************************\
-    * @dev Returns all YieldTree id's owned by specific address
-    /******************************************************************************/
-    function getYieldTreesOf(address _of) public view returns(uint256[] memory) {
-        LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
-        uint256[] memory yieldtrees = YTds.yieldtreesOf[_of];
-        return yieldtrees;
-    }
-
-    /******************************************************************************\
-    * @dev Returns all YieldTree data of specific id
-    /******************************************************************************/
-    function getYieldTree(uint256 _id) public view returns(LibYieldTree.YieldTree memory) {
-        LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
-        LibYieldTree.YieldTree memory yieldtree = YTds.yieldtrees[_id];
-        return yieldtree;
+        uint256 newYieldTreeId = LibYieldTree._mintYieldTree(LibProtocolMetaData._msgSender(),  _headquarterId);
+        emit YieldTreeMinted(LibProtocolMetaData._msgSender(), newYieldTreeId);
+        return newYieldTreeId;
     }
 } 

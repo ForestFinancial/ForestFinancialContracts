@@ -9,13 +9,14 @@ pragma solidity ^0.8.4;
 *
 /******************************************************************************/
 
-import "../../interfaces/IERC721.sol";
 import "../../libraries/LibProtocolMetaData.sol";
 import "../../libraries/LibYieldTree.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract YieldTreeFeeFacet is ReentrancyGuard {
+    event YieldTreeFeePaid(uint256 indexed _yieldtreeId);
+    event AllYieldTreeFeesPaid(address indexed _for);
+
     modifier notBlacklisted() {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         require(PMds.blacklisted[LibProtocolMetaData._msgSender()] != true, "FOREST: Address is blacklisted");
@@ -66,6 +67,7 @@ contract YieldTreeFeeFacet is ReentrancyGuard {
         
         distributeYieldTreeFeePayment(msg.value);
         LibYieldTree._feePaidOfYieldTree(_yieldtreeId);
+        emit YieldTreeFeePaid(_yieldtreeId);
     }
 
     /******************************************************************************\
@@ -93,15 +95,6 @@ contract YieldTreeFeeFacet is ReentrancyGuard {
 
         distributeYieldTreeFeePayment(msg.value);
         for(uint i = 0; i < ownedYieldTrees.length; i++) LibYieldTree._feePaidOfYieldTree(ownedYieldTrees[i]);
-    }
-
-    /******************************************************************************\
-    * @dev Returns total hours until the last paid fees expire
-    /******************************************************************************/
-    function getRemainingHoursUntilFeeExpiry(uint256 _yieldtreeId) public view returns (uint256) {
-        LibYieldTree.DiamondStorage storage YTds = LibYieldTree.diamondStorage();
-        LibYieldTree.YieldTree memory yieldtree = YTds.yieldtrees[_yieldtreeId];
-        if (yieldtree.feeExpiryTime < block.timestamp) return 0;
-        return (yieldtree.feeExpiryTime - block.timestamp) / 60 / 60;
+        emit AllYieldTreeFeesPaid(LibProtocolMetaData._msgSender());
     }
 }

@@ -13,7 +13,7 @@ import "../interfaces/IERC721.sol";
 import "../libraries/LibProtocolMetaData.sol";
 import "../libraries/LibTokenData.sol";
 import "../libraries/LibHeadquarter.sol";
-import "../libraries/LibForesterNFT.sol";
+import "../libraries/LibCoreNFT.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -32,7 +32,7 @@ library LibYieldTree {
         uint256 totalClaimed; // Total claimed tokens
         uint256 foresterId; // The assigned forester
 
-        string coreNFTName; // Attached coreNFT name
+        uint8 coreNFTType; // Attached coreNFT type
         uint256 coreNFTId; // Attached coreNFT id
     }
 
@@ -54,7 +54,7 @@ library LibYieldTree {
         uint8 forestRewardPoolPercentage;
         uint8 forestTreasuryPercentage;
         uint8 etherLiquidityPercentage;
-        uint8 etherRewardPercentage;
+        uint8 etherRewardPoolPercentage;
         uint8 etherTreasuryPercentage;
         uint8 feeTreasuryPercentage;
         uint8 feeCharityPercentage;
@@ -103,9 +103,6 @@ library LibYieldTree {
         newYieldTree.creationTime = uint32(block.timestamp);
         newYieldTree.lastFeePaidTime = uint32(block.timestamp);
         newYieldTree.feeExpiryTime = uint32(block.timestamp + (30 * 1 days));
-
-        uint256 foresterId = LibForesterNFT._mintForesterNFT(id);
-        LibForesterNFT._attachForesterNFT(id, foresterId);
 
         YTds.yieldtreesOf[_for].push(id);
         YTds.yieldtrees[id] = newYieldTree;
@@ -173,6 +170,16 @@ library LibYieldTree {
             }
         } else {
             toReward += YTds.yieldtreesMetadata.baseRewards;
+        }
+
+        if (yieldtree.coreNFTType != 0 && yieldtree.coreNFTId != 0) {
+            LibCoreNFT.CoreNFT memory coreNFT = LibCoreNFT._getCoreNFT(yieldtree.coreNFTId, yieldtree.coreNFTType);
+            IERC721 coreNFTContract = LibCoreNFT._getCoreNFTContract(yieldtree.coreNFTType);
+            uint256 coreNFTBoost = LibCoreNFT._getCoreNFTBoost(yieldtree.coreNFTType);
+
+            if (yieldtree.owner == coreNFTContract.ownerOf(yieldtree.coreNFTId) && coreNFT.yieldtreeId == _yieldtreeId) {
+                toReward += coreNFTBoost;
+            }
         }
 
         return toReward;

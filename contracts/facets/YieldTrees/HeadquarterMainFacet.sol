@@ -14,6 +14,9 @@ import "../../libraries/LibHeadquarter.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract HeadquarterMainFacet is ReentrancyGuard {
+    event HeadquarterMinted(address indexed _for, uint256 indexed _newHeadquarterId);
+    event HeadquarterUpgraded(uint256 indexed _headquarterId);
+
     modifier notBlacklisted() {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         require(PMds.blacklisted[LibProtocolMetaData._msgSender()] != true, "FOREST: Caller is blacklisted");
@@ -65,7 +68,10 @@ contract HeadquarterMainFacet is ReentrancyGuard {
                 forestTokenPrice
             );
 
-            return LibHeadquarter._mintHeadquarter(LibProtocolMetaData._msgSender(), _continent);
+            uint256 newHeadquarterId = LibHeadquarter._mintHeadquarter(LibProtocolMetaData._msgSender(), _continent);
+            emit HeadquarterMinted(LibProtocolMetaData._msgSender(), newHeadquarterId);
+
+            return newHeadquarterId;
         }
     }
 
@@ -93,6 +99,7 @@ contract HeadquarterMainFacet is ReentrancyGuard {
         );
 
         LibHeadquarter._upgradeHeadquarter(_headquarterId);
+        emit HeadquarterUpgraded(_headquarterId);
     }
 
     /******************************************************************************\

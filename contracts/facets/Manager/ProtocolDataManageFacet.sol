@@ -12,7 +12,7 @@ pragma solidity ^0.8.4;
 import "../../libraries/LibDiamond.sol";
 import "../../libraries/LibProtocolMetaData.sol";
 
-contract ProtocolDataManageFacet {
+contract YieldTreeManageFacet {
     modifier onlyOwner() {
         require(LibProtocolMetaData._msgSender() == LibDiamond.contractOwner(), "FOREST: Caller is not the owner");
         _;
@@ -24,7 +24,8 @@ contract ProtocolDataManageFacet {
         address _rootsTreasury,
         address _charity,
         address _forestToken,
-        address _rootsToken
+        address _rootsToken,
+        address _stableToken
     ) external onlyOwner {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
 
@@ -34,12 +35,14 @@ contract ProtocolDataManageFacet {
         PMds.charity = _charity;
         PMds.forestToken = IERC20(_forestToken);
         PMds.rootsToken = IERC20(_rootsToken);
-
+        PMds.stableToken = IERC20(_stableToken);
     }
 
-    function initProcotolMetaData2(
-        address _stableToken,
-        address _foresterNFT,
+    function initProtocolMetaData2(
+        address _seedNFT,
+        address _saplingNFT,
+        address _treeNFT,
+        address _peltonNFT,
         address _joeRouter,
         address _joeFactory,
         address _joePair,
@@ -47,8 +50,10 @@ contract ProtocolDataManageFacet {
     ) external onlyOwner {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
 
-        PMds.stableToken = IERC20(_stableToken);
-        PMds.foresterNFT = IERC721(_foresterNFT);
+        PMds.seedNFT = IERC721(_seedNFT);
+        PMds.saplingNFT = IERC721(_saplingNFT);
+        PMds.treeNFT = IERC721(_treeNFT);
+        PMds.peltonNFT = IERC721(_peltonNFT);
         PMds.joeRouter = IJoeRouter02(_joeRouter);
         PMds.joeFactory = IJoeFactory(_joeFactory);
         PMds.joePair = IJoePair(_joePair);
@@ -89,10 +94,25 @@ contract ProtocolDataManageFacet {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
         PMds.stableToken = IERC20(_stableToken);  
     }
-
-    function setForesterNFT(address _foresterNFT) external onlyOwner {
+    
+    function setSeedNFT(address _seedNFT) external onlyOwner {
         LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
-        PMds.foresterNFT = IERC721(_foresterNFT);  
+        PMds.seedNFT = IERC721(_seedNFT);  
+    }
+
+    function setSaplingNFT(address _saplingNFT) external onlyOwner {
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
+        PMds.saplingNFT = IERC721(_saplingNFT);  
+    }
+
+    function setTreeNFT(address _treeNFT) external onlyOwner {
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
+        PMds.treeNFT = IERC721(_treeNFT);  
+    }
+
+    function setPeltonNFT(address _peltonNFT) external onlyOwner {
+        LibProtocolMetaData.DiamondStorage storage PMds = LibProtocolMetaData.diamondStorage();
+        PMds.peltonNFT = IERC721(_peltonNFT);  
     }
 
     function setJoeRouter(address _joeRouter) external onlyOwner {

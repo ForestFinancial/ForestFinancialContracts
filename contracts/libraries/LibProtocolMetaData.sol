@@ -26,7 +26,10 @@ library LibProtocolMetaData {
         IERC20 forestToken;
         IERC20 rootsToken;
         IERC20 stableToken;
-        IERC721 foresterNFT;
+        IERC721 seedNFT;
+        IERC721 saplingNFT;
+        IERC721 treeNFT;
+        IERC721 peltonNFT;
 
         IJoeRouter02 joeRouter;
         IJoeFactory joeFactory;

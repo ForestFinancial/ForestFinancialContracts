@@ -76,14 +76,14 @@ contract RootsFacet is ReentrancyGuard {
     * @dev Returns the current buy price
     /******************************************************************************/
     function getRootsBuyPrice() public view returns (uint256) {
-        return LibRoots._getRootsBuyPrice();
+        return LibRoots._getRootsBuyPrice(LibProtocolMetaData._msgSender());
     }
 
     /******************************************************************************\
     * @dev Returns the current sell price
     /******************************************************************************/
     function getRootsSellPrice() public view returns (uint256) {
-        return LibRoots._getRootsSellPrice();
+        return LibRoots._getRootsSellPrice(LibProtocolMetaData._msgSender());
     }
 
     /******************************************************************************\

@@ -27,6 +27,4 @@ library LibLiquidityManager {
             block.timestamp
         );
     }
-
-
 }
